@@ -30,7 +30,7 @@ The four notebooks vary along two axes: AL approach and grid size.
 
 A committee of 5 independent Q-tables votes on the best action at every non-wall state. Each episode begins at the state where the committee disagrees most, measured by **vote entropy**. Action selection during exploration is uniform random for both the baseline and AL agent — the only AL difference is the episode start state.
 
-| | Baseline | AL |
+| | Baseline | Active Learning (multi-agent) |
 |---|---|---|
 | **Episode start** | Uniformly random non-wall cell | State with max committee vote entropy |
 | **Exploration action** | Uniform random | Uniform random (same as baseline) |
@@ -51,18 +51,22 @@ $$P(a \mid s) = \frac{u\bigl(\text{next}(s,a)\bigr) + \varepsilon}{\sum_{a'} u\b
 
 The agent samples the action whose resulting neighbour has the highest uncertainty.
 
-| | Baseline | AL |
+| | Baseline | Active Learning (1 agent) |
 |---|---|---|
 | **Episode start** | Uniformly random non-wall cell | Uniformly random non-wall cell (same as baseline) |
 | **Exploration action** | Uniform random | Sampled ∝ uncertainty of next state |
 
 ## Design Choices
 
-### 1. Allow four cardinal movement directions (↑, ↓, →, ←)
+### 1. Five actions: four cardinal directions (↑, ↓, →, ←) plus ↗ up-right
 
-The first version of the environment only allowed diagonal movement (↗ up-right and ↙ down-left), similar to how a bishop moves in chess. This meant that only states lying on the same diagonal as the goal could ever reach it — agents starting outside that diagonal were permanently blocked from earning any positive reward, causing most episodes to end with large penalties. Adding the four cardinal directions gives every state a path to the goal while keeping the semantics of each action grounded in the physical system.
+The first version of the environment only allowed diagonal movement (↗ up-right and ↙ down-left), similar to how a bishop moves in chess. This meant that only states lying on the same diagonal as the goal could ever reach it — agents starting outside that diagonal were permanently blocked from earning any positive reward, causing most episodes to end with large penalties. The fix was to add the four cardinal directions while keeping ↗ up-right (the productive transformer-charges-EV action), giving every state a path to the goal across all five actions.
 
-### 2. Use 50×50 grids in addition to 10×10
+### 2. Set ↗ up-right reward to 0 instead of a positive value
+
+Intuitively ↗ up-right (transformer actively charges the EV) deserves a positive reward — it is the productive action the system is designed for. Setting it to, say, +10 causes the agent to circle indefinitely collecting step rewards instead of entering the goal. Two fixes are possible: decay the ↗ reward over time to motivate eventual goal-seeking, or simply set it to 0. This experiment uses 0 — it is semantically reasonable (the action is neutral cost, not penalised) and avoids introducing a decay hyperparameter that would require tuning.
+
+### 3. Use 50×50 grids in addition to 10×10
 
 On a 10×10 grid the exploration problem is easy enough that the random baseline can stumble onto a good route faster than AL converges. This makes AL look worse despite being a stronger strategy in harder settings. The 50×50 grid has 25× more states on the same episode budget, so the exploration advantage of AL is large enough to show up clearly in the results.
 
