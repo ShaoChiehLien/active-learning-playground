@@ -1,6 +1,6 @@
 # Active Learning and Grid World
 
-Comparing two Active Learning (AL) strategies applied to Q-learning in a simulated energy grid management problem. Each strategy is evaluated on a 10×10 and a 50×50 grid.
+Applying an Active Learning (AL) strategy to Q-learning in a simulated energy grid management problem, evaluated on a 10×10 and a 50×50 grid.
 
 ## Problem Setting
 
@@ -24,7 +24,7 @@ The image below shows learned policies on a 50×50 grid after training — left 
 
 ## Variants
 
-The four notebooks vary along two axes: AL approach and grid size.
+The two notebooks vary in grid size.
 
 ### Variant A — QBC Start State Only
 
@@ -34,27 +34,6 @@ A committee of 5 independent Q-tables votes on the best action at every non-wall
 |---|---|---|
 | **Episode start** | Uniformly random non-wall cell | State with max committee vote entropy |
 | **Exploration action** | Uniform random | Uniform random (same as baseline) |
-
-### Variant B — Uncertainty-Guided Action Only
-
-No committee. The episode start state is uniformly random for both agents. During exploration, the AL agent samples actions proportionally to the uncertainty of the resulting next state rather than uniformly at random.
-
-**Uncertainty score per cell:**
-
-$$u(s) = \sigma_a\bigl[Q(s,a)\bigr] + \frac{0.5}{1 + \text{visits}(s)}$$
-
-where $\sigma_a[Q(s,a)]$ is the standard deviation of Q-values across actions at state $s$, and the second term is a visit bonus that decays as the cell is explored.
-
-**Action probability during exploration:**
-
-$$P(a \mid s) = \frac{u\bigl(\text{next}(s,a)\bigr) + \varepsilon}{\sum_{a'} u\bigl(\text{next}(s,a')\bigr) + \varepsilon}$$
-
-The agent samples the action whose resulting neighbour has the highest uncertainty.
-
-| | Baseline | Active Learning (1 agent) |
-|---|---|---|
-| **Episode start** | Uniformly random non-wall cell | Uniformly random non-wall cell (same as baseline) |
-| **Exploration action** | Uniform random | Sampled ∝ uncertainty of next state |
 
 ## Design Choices
 
@@ -76,18 +55,12 @@ On a 10×10 grid the exploration problem is easy enough that the random baseline
 
 Because the QBC start strategy deliberately places the agent in the states it is most uncertain about, the agent spends training in genuinely hard situations and accumulates lower per-episode rewards than the baseline. In evaluation (where both agents start from the same fixed states at the same environment snapshot), however, AL outperforms the baseline — a reminder that a dropping or noisy training curve does not always indicate a worse policy, especially when the training distribution is intentionally skewed toward difficulty.
 
-### 2. Variant B AL takes longer to overtake the baseline
-
-The uncertainty-guided action selection imposes an exploration tax: the AL agent is repeatedly directed toward uncertain, often suboptimal states, delaying the accumulation of high-quality Q-value estimates needed to exploit a good policy. Because this tax is paid on every exploration step rather than only at episode start (as in Variant A), the performance crossover with the baseline happens later in training.
-
 ## Files
 
 | File | AL approach | Grid |
 |---|---|---|
 | `grid-world-AL-poc-variant-A-10x10.ipynb` | QBC start state | 10×10 |
 | `grid-world-AL-poc-variant-A-50x50.ipynb` | QBC start state | 50×50 |
-| `grid-world-AL-poc-variant-B-10x10.ipynb` | Uncertainty action | 10×10 |
-| `grid-world-AL-poc-variant-B-50x50.ipynb` | Uncertainty action | 50×50 |
 
 The 50×50 grid has 25× more states than the 10×10 grid but uses the same episode budget, making it a harder exploration problem.
 
@@ -97,4 +70,4 @@ The 50×50 grid has 25× more states than the 10×10 grid but uses the same epis
 pip install -r requirements.txt
 ```
 
-Open any of the four notebooks and run all cells.
+Open either notebook and run all cells.
